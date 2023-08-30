@@ -6,5 +6,8 @@
     },
     "require-dev": {
         "phpstan/phpstan": "^1.10"
+    },
+    "require": {
+        "vlucas/phpdotenv": "^5.5"
     }
 }

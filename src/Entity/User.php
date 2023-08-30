@@ -4,15 +4,21 @@ namespace src\Entity;
 
 class User
 {
+    private ?int $id;
     private ?string $name;
     private ?string $login;
     private ?string $phone;
     private ?string $email;
-    public function __construct(?string $name = null, ?string $login = null, ?string $email = null, ?string $phone = null) {
+    public function __construct(?int $id, ?string $name = null, ?string $login = null, ?string $email = null, ?string $phone = null) {
+        $this->id = $id;
         $this->name = $name;
         $this->login = $login;
         $this->email = $email;
         $this->phone = $phone;
+    }
+    public function getId(): int
+    {
+        return $this->id;
     }
     public function getName()
     {
