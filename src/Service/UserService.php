@@ -5,7 +5,7 @@ use src\Collaction\UserCollection;
 use src\Database\DatabaseConnectionInterface;
 use src\Entity\User;
 
-class UserCRUD
+class UserService
 {
     private DatabaseConnectionInterface $databaseConnection;
 

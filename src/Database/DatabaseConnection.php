@@ -20,9 +20,9 @@ class DatabaseConnection implements DatabaseConnectionInterface
      */
     public function initConnection(): void
     {
-        $dbHost = $_ENV['DB_HOST'];
-        $dbName = $_ENV['DB_NAME'];
-        $dbUser = $_ENV['DB_USER'];
+        $dbHost = $_ENV['DB_DATABASE_HOST'];
+        $dbName = $_ENV['DB_DATABASE_NAME'];
+        $dbUser = $_ENV['DB_USERNAME'];
         $dbPassword = $_ENV['DB_PASSWORD'];
         try {
             $this->pdo = new PDO("pgsql:host=$dbHost;dbname=$dbName", $dbUser, $dbPassword);
