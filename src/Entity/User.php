@@ -9,7 +9,10 @@ class User
     private ?string $login;
     private ?string $phone;
     private ?string $email;
-    public function __construct(?int $id, ?string $name = null, ?string $login = null, ?string $email = null, ?string $phone = null) {
+    public function __construct(
+        ?int $id = null, ?string $name = null, ?string $login = null,
+        ?string $email = null, ?string $phone = null
+    ) {
         $this->id = $id;
         $this->name = $name;
         $this->login = $login;
@@ -52,13 +55,13 @@ class User
     {
         $this->name = $name;
     }
-    public function toJson(): string
+    public function toArray(): array
     {
-        return json_encode([
+        return [
             'name' => $this->name,
             'login' => $this->login,
             'email' => $this->email,
             'phone' => $this->phone
-        ]);
+        ];
     }
 }

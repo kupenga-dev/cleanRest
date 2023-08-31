@@ -15,7 +15,7 @@ class UserCollection
     {
         $this->users[] = $user;
     }
-    public function getUsers(): array
+    public function toArray(): array
     {
         return $this->users;
     }

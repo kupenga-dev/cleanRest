@@ -6,6 +6,8 @@ use FastRoute\Dispatcher;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use ReflectionMethod;
+use ReflectionNamedType;
 
 class Router
 {
@@ -17,6 +19,9 @@ class Router
         $this->dispatcher = $dispatcher;
         $this->responseFactory = $responseFactory;
     }
+    /**
+     * @throws \ReflectionException
+     */
     public function handleRequest(ServerRequestInterface $request): void
     {
         $uri = $request->getUri()->getPath();
@@ -35,25 +40,44 @@ class Router
                 $handler = $routeInfo[1];
                 $vars = $routeInfo[2];
                 list($controllerClass, $method) = explode('#', $handler);
-                $controller = new $controllerClass();
-                if ($method === 'getUsers'){
-                    $response = $controller->$method();
-                    $this->sendResponse($response);
-                    break;
-                }
-                $response = $controller->$method($request);
+                $response = $this->invokeControllerMethod($controllerClass, $method, $vars, $request);
                 $this->sendResponse($response);
                 break;
         }
     }
+    /**
+     * @throws \ReflectionException
+     */
+    private function invokeControllerMethod(string $controllerClass, string $method, array $vars,
+                                            ServerRequestInterface $request): ResponseInterface
+    {
+        $controller = new $controllerClass();
+        $reflectionMethod = new ReflectionMethod($controller, $method);
+        $methodParameters = $reflectionMethod->getParameters();
+        $methodArguments = [];
+        foreach ($methodParameters as $parameter) {
+            $parameterType = $parameter->getType();
+            if (
+                $parameterType instanceof ReflectionNamedType &&
+                !$parameterType->isBuiltin() &&
+                $parameterType->getName() === ServerRequestInterface::class
+            ) {
+                $methodArguments[] = $request;
+                continue;
+            }
+            $parameterName = $parameter->getName();
+            if (isset($vars[$parameterName])){
+                $methodArguments[] = $vars[$parameterName];
+            }
+        }
+        return $reflectionMethod->invokeArgs($controller, $methodArguments);
+    }
     private function sendResponse(ResponseInterface $response): void
     {
         http_response_code($response->getStatusCode());
-
         foreach ($response->getHeaders() as $name => $values) {
             header(sprintf('%s: %s', $name, implode(', ', $values)));
         }
-
         echo $response->getBody();
     }
 }

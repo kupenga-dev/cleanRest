@@ -34,14 +34,15 @@ class DatabaseConnection implements DatabaseConnectionInterface
     /**
      * @throws DatabaseException
      */
-    public function executeQuery(string $query, ?array $params): void
+    public function executeQuery(string $query, ?array $params): int
     {
         if (!isset($params) || $params === []){
-            return;
+            return 0;
         }
         try {
             $stmt = $this->pdo->prepare($query);
             $stmt->execute($params);
+            return $stmt->rowCount();
         } catch (\PDOException $e) {
             throw new DatabaseException("Database query failed:", 0, $e);
         }
