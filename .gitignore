@@ -2,4 +2,3 @@
 vendor/
 /system/*
 !/system/.gitkeep
-composer.lock
