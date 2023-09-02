@@ -119,7 +119,7 @@ class UserController
         if (!$updatedUser){
             return new Response(404, [], 'Something went wrong. Try later.');
         }
-        return new Response(200, [], 'User successfully created.');
+        return new Response(200, [], 'User successfully updated.');
     }
     public function partialUpdate(ServerRequestInterface $request): ResponseInterface
     {
