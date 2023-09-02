@@ -66,7 +66,7 @@ class UserController
             return new Response(404, [], 'Invalid login. Must me from 5 to 10 letters.');
         }
         $userExists = $this->userService->getUserByLogin($data['login']);
-        if (!isset($userExists)){
+        if (isset($userExists)){
             return new Response(404, [], 'User with the same login found. Edit the login.');
         }
         if (!$this->validator->validateEmail($data['email'])){
