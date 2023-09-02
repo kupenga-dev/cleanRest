@@ -1,5 +1,7 @@
 include .env
 
+dependencies:
+	docker exec -it ${COMPOSE_PROJECT_NAME}-app composer install
 up:
 	docker-compose up -d --build
 down:
