@@ -44,7 +44,7 @@
    1 Петров Petrov<br>
    2 Сидоров Sidorov<br>
 
-make sql_part2<br>
+``` make sql_part2 ```
 
 3. Python<br>
    Сделать скрипт, который читает файл лог nginx и выводит топ 3 запроса по<br>
@@ -52,4 +52,4 @@ make sql_part2<br>
    большим<br>
    Условие - реализовать стандартной библиотекой<br>
 
-python3 task3.py
+``` make python_part3 ```
