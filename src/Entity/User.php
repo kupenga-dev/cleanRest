@@ -23,19 +23,19 @@ class User
     {
         return $this->id;
     }
-    public function getName()
+    public function getName(): ?string
     {
         return $this->name;
     }
-    public function getLogin()
+    public function getLogin(): ?string
     {
         return $this->login;
     }
-    public function getEmail()
+    public function getEmail(): ?string
     {
         return $this->email;
     }
-    public function getPhone()
+    public function getPhone(): ?string
     {
         return $this->phone;
     }

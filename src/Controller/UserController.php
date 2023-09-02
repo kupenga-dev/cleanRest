@@ -7,6 +7,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use src\Database\DatabaseConnection;
 use src\Entity\User;
+use src\Exception\DatabaseException;
 use src\Service\UserService;
 use src\Validation\Validator;
 
@@ -15,9 +16,16 @@ class UserController
     private UserService $userService;
     private Validator $validator;
 
+    /**
+     * @throws DatabaseException
+     */
     public function __construct()
     {
-        $database = new DatabaseConnection();
+        $dbHost = $_ENV['DB_DATABASE_HOST'];
+        $dbName = $_ENV['DB_DATABASE_NAME'];
+        $dbUser = $_ENV['DB_USERNAME'];
+        $dbPassword = $_ENV['DB_PASSWORD'];
+        $database = new DatabaseConnection($dbHost, $dbName, $dbUser, $dbPassword);
         $this->userService = new UserService($database);
         $this->validator = new Validator();
     }
@@ -58,7 +66,7 @@ class UserController
             return new Response(404, [], 'Invalid login. Must me from 5 to 10 letters.');
         }
         $userExists = $this->userService->getUserByLogin($data['login']);
-        if (isset($userExists)){
+        if (!isset($userExists)){
             return new Response(404, [], 'User with the same login found. Edit the login.');
         }
         if (!$this->validator->validateEmail($data['email'])){
@@ -79,55 +87,62 @@ class UserController
         }
         return new Response(200, [], 'User successfully created.');
     }
-    public function update(?string $login, ServerRequestInterface $request): ResponseInterface
+    public function update(ServerRequestInterface $request): ResponseInterface
     {
-        if ($this->validator->validateLogin($login)){
-            return new Response(404, [], 'Invalid value of login.');
-        }
-        $userExists = $this->userService->getUserByLogin($login);
-        if (isset($userExists)){
-            return new Response(404, [], 'User with the same login not found. Edit the login.');
-        }
         $body = $request->getBody()->getContents();
         $data = json_decode($body, true);
-        if (!$this->validator->validateEmail($data['email'])){
-            return new Response(404, [], 'Invalid email.');
+        if (!$this->validator->validateLogin($data['login'])){
+            return new Response(404, [], 'Invalid value of login.');
         }
-        if (!$this->validator->validatePhone($data['phone'])){
-            return new Response(404, [], 'Invalid value of phone.');
+        $userExists = $this->userService->getUserByLogin($data['login']);
+        if (!isset($userExists)){
+            return new Response(404, [], 'User with the same login not found. Edit the login.');
         }
         $user = new User();
-        $user->setLogin($login);
-        $user->setEmail($data['email']);
-        $user->setPhone($data['phone']);
-        isset($data['name']) ? $user->setName($data['name']) : $user->setName(null);
+        $user->setLogin($data['login']);
+        if (isset($data['name'])){
+            $user->setName($data['name']);
+        } else {
+            $user->setName(null);
+        }
+        if (!isset($data['email']) || !$this->validator->isEmailCorrect($data['email'])){
+            $user->setEmail(null);
+        } else {
+            $user->setEmail($data['email']);
+        }
+        if (!isset($data['phone']) || !$this->validator->isCorrectNumber($data['phone'])){
+            $user->setPhone(null);
+        } else {
+            $user->setPhone($data['phone']);
+        }
         $updatedUser = $this->userService->updateUser($user);
         if (!$updatedUser){
             return new Response(404, [], 'Something went wrong. Try later.');
         }
         return new Response(200, [], 'User successfully created.');
     }
-    public function partialUpdate(?string $login, ServerRequestInterface $request): ResponseInterface
+    public function partialUpdate(ServerRequestInterface $request): ResponseInterface
     {
-        if ($this->validator->validateLogin($login)){
-            return new Response(404, [], 'Invalid value of login.');
-        }
-        $userExists = $this->userService->getUserByLogin($login);
-        if (isset($userExists)){
-            return new Response(404, [], 'User with the same login not found. Edit the login.');
-        }
         $body = $request->getBody()->getContents();
         $data = json_decode($body, true);
-        if (!$this->validator->validateEmail($data['email'])){
-            return new Response(404, [], 'Invalid email.');
+        if (!$this->validator->validateLogin($data['login'])){
+            return new Response(404, [], 'Invalid value of login.');
+        }
+        $userExists = $this->userService->getUserByLogin($data['login']);
+        if (!isset($userExists)){
+            return new Response(404, [], 'User with the same login not found. Edit the login.');
         }
         if (!$this->validator->validatePhone($data['phone'])){
             return new Response(404, [], 'Invalid value of phone.');
         }
         $user = new User();
-        $user->setLogin($login);
-        $user->setEmail($data['email']);
-        $user->setPhone($data['phone']);
+        $user->setLogin($data['login']);
+        if (isset($data['email']) && $this->validator->isEmailCorrect($data['email'])){
+            $user->setEmail($data['email']);
+        }
+        if (isset($data['phone']) && $this->validator->isCorrectNumber($data['phone'])){
+            $user->setPhone($data['phone']);
+        }
         if (isset($data['name'])){
             $user->setName($data['name']);
         }
@@ -135,7 +150,7 @@ class UserController
         if (!$updatedUser){
             return new Response(404, [], 'Something went wrong. Try later.');
         }
-        return new Response(200, [], 'User successfully created.');
+        return new Response(200, [], 'User successfully updated.');
     }
     public function destroy(?string $login): ResponseInterface
     {

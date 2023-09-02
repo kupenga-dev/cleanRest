@@ -22,11 +22,11 @@ class Router
     /**
      * @throws \ReflectionException
      */
-    public function handleRequest(ServerRequestInterface $request): void
+    public function handleRequest(ServerRequestInterface $request): ResponseInterface
     {
         $uri = $request->getUri()->getPath();
         $routeInfo = $this->dispatcher->dispatch($request->getMethod(), $uri);
-
+        $response = $this->responseFactory->createResponse(200);
         switch ($routeInfo[0]) {
             case $this->dispatcher::NOT_FOUND:
                 $response = $this->responseFactory->createResponse(404);
@@ -41,9 +41,10 @@ class Router
                 $vars = $routeInfo[2];
                 list($controllerClass, $method) = explode('#', $handler);
                 $response = $this->invokeControllerMethod($controllerClass, $method, $vars, $request);
-                $this->sendResponse($response);
                 break;
         }
+        $this->sendResponse($response);
+        return $response;
     }
     /**
      * @throws \ReflectionException
@@ -75,9 +76,6 @@ class Router
     private function sendResponse(ResponseInterface $response): void
     {
         http_response_code($response->getStatusCode());
-        foreach ($response->getHeaders() as $name => $values) {
-            header(sprintf('%s: %s', $name, implode(', ', $values)));
-        }
         echo $response->getBody();
     }
 }

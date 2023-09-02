@@ -1,6 +1,6 @@
 <?php
 
-namespace src\Collaction;
+namespace src\Collection;
 
 use src\Entity\User;
 

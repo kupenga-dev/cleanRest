@@ -1,8 +1,10 @@
 <?php
 
 namespace src\Database;
+
 use PDO;
 use PDOException;
+use PDOStatement;
 use src\Exception\DatabaseException;
 
 class DatabaseConnection implements DatabaseConnectionInterface
@@ -11,19 +13,15 @@ class DatabaseConnection implements DatabaseConnectionInterface
     /**
      * @throws DatabaseException
      */
-    public function __construct()
+    public function __construct(string $dbHost, string $dbName, string $dbUser, string $dbPassword)
     {
-        $this->initConnection();
+        $this->initConnection($dbHost, $dbName, $dbUser, $dbPassword);
     }
     /**
      * @throws DatabaseException
      */
-    public function initConnection(): void
+    public function initConnection(string $dbHost, string $dbName, string $dbUser, string $dbPassword): void
     {
-        $dbHost = $_ENV['DB_DATABASE_HOST'];
-        $dbName = $_ENV['DB_DATABASE_NAME'];
-        $dbUser = $_ENV['DB_USERNAME'];
-        $dbPassword = $_ENV['DB_PASSWORD'];
         try {
             $this->pdo = new PDO("pgsql:host=$dbHost;dbname=$dbName", $dbUser, $dbPassword);
             $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -34,15 +32,15 @@ class DatabaseConnection implements DatabaseConnectionInterface
     /**
      * @throws DatabaseException
      */
-    public function executeQuery(string $query, ?array $params): int
+    public function executeQuery(string $query, ?array $params): ?PDOStatement
     {
-        if (!isset($params) || $params === []){
-            return 0;
+        if (!isset($params)){
+            return null;
         }
         try {
             $stmt = $this->pdo->prepare($query);
             $stmt->execute($params);
-            return $stmt->rowCount();
+            return $stmt;
         } catch (\PDOException $e) {
             throw new DatabaseException("Database query failed:", 0, $e);
         }

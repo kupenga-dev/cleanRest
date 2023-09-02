@@ -9,7 +9,7 @@ class Validator extends BaseValidator
         if (!isset($login)){
             return false;
         }
-        return parent::validateStringLength($login, 5, 10);
+        return parent::validateStringLength($login, 5, 15);
     }
     public function validateEmail(?string $email): bool
     {

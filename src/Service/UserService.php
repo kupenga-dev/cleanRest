@@ -1,7 +1,7 @@
 <?php
 
 namespace src\Service;
-use src\Collaction\UserCollection;
+use src\Collection\UserCollection;
 use src\Database\DatabaseConnectionInterface;
 use src\Entity\User;
 
@@ -18,6 +18,9 @@ class UserService
         $query = "SELECT * FROM users";
         $result = $this->databaseConnection->executeQuery($query, []);
         $userCollection = new UserCollection();
+        if (!$result){
+            return null;
+        }
         while ($row = $result->fetch()) {
             $user = new User(
                 $row['id'],
@@ -52,34 +55,34 @@ class UserService
     }
     public function createUser(User $user): bool
     {
-        $userProperties = get_object_vars($user);
-        $fields = [];
+        $fields = ['name', 'login', 'email', 'phone'];
+        $placeholders = [];
         $values = [];
-
-        foreach ($userProperties as $property => $value) {
-            if ($property == 'id'){
-                continue;
-            }
-            $fields[] = $property;
+        foreach ($fields as $field) {
+            $getter = 'get' . ucfirst($field);
+            $value = $user->$getter();
+            $placeholders[] = "?";
             $values[] = $value;
         }
         $fieldsString = implode(', ', $fields);
-        $fieldsValues = implode(', ', array_fill(0, count($values), '?'));
-        $query = "INSERT INTO users ($fieldsString) VALUES ($fieldsValues)";
-        $rowCount = $this->databaseConnection->executeQuery($query, $values);
-        return $rowCount > 0;
+        $placeholdersString = implode(', ', $placeholders);
+        $query = "INSERT INTO users ($fieldsString) VALUES ($placeholdersString)";
+        $dbStatement = $this->databaseConnection->executeQuery($query, $values);
+        return $dbStatement->rowCount() > 0;
     }
     public function updateUser(User $user): bool
     {
-        $userProperties = get_object_vars($user);
+        $fields = ['name', 'email', 'phone'];
         $updateFields = [];
         $values = [];
 
-        foreach ($userProperties as $property => $value) {
-            if ($property === 'id') {
+        foreach ($fields as $field) {
+            if ($field === 'id') {
                 continue;
             }
-            $updateFields[] = "$property = ?";
+            $getter = 'get' . ucfirst($field);
+            $value = $user->$getter();
+            $updateFields[] = "$field = ?";
             $values[] = $value;
         }
 
@@ -87,23 +90,25 @@ class UserService
         $updateFieldsString = implode(', ', $updateFields);
 
         $query = "UPDATE users SET $updateFieldsString WHERE login = ?";
-        $rows = $this->databaseConnection->executeQuery($query, $values);
-        return $rows > 0;
+        $dbStatement = $this->databaseConnection->executeQuery($query, $values);
+        return $dbStatement->rowCount() > 0;
     }
     public function partialUpdateUser(User $user): bool
     {
-        $userProperties = get_object_vars($user);
+        $fields = ['name', 'email', 'phone'];
         $updateFields = [];
         $values = [];
 
-        foreach ($userProperties as $property => $value) {
-            if (empty($value)){
+        foreach ($fields as $field) {
+            if ($field === 'id') {
                 continue;
             }
-            if ($property === 'id') {
+            $getter = 'get' . ucfirst($field);
+            $value = $user->$getter();
+            if (!isset($value)){
                 continue;
             }
-            $updateFields[] = "$property = ?";
+            $updateFields[] = "$field = ?";
             $values[] = $value;
         }
 
@@ -111,16 +116,13 @@ class UserService
         $updateFieldsString = implode(', ', $updateFields);
 
         $query = "UPDATE users SET $updateFieldsString WHERE login = ?";
-        $rows = $this->databaseConnection->executeQuery($query, $values);
-        return $rows > 0;
+        $dbStatement = $this->databaseConnection->executeQuery($query, $values);
+        return $dbStatement->rowCount() > 0;
     }
     public function deleteUser(string $login): bool
     {
         $query = "DELETE FROM users WHERE login = ?";
-        $rowsCount = $this->databaseConnection->executeQuery($query, [$login]);
-        if ($rowsCount > 0){
-            return true;
-        }
-        return false;
+        $dbStatement = $this->databaseConnection->executeQuery($query, [$login]);
+        return $dbStatement->rowCount() > 0;
     }
 }
